@@ -38,7 +38,7 @@ h1 { font-size: 26px; color: #4a1d6e; margin-bottom: 6px; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 .option-btn {
   width: 100%; padding: 16px; margin: 6px 0; border: 3px solid #e0e0e0;
-  border-radius: 12px; font-size: 22px; background: #fafafa;
+  border-radius: 12px; font-size: 28px; background: #fafafa;
   cursor: pointer; transition: all 0.15s; color: #333;
 }
 .option-btn:hover { border-color: #667eea; background: #f0f0ff; }
@@ -129,35 +129,46 @@ h1 { font-size: 26px; color: #4a1d6e; margin-bottom: 6px; }
 
   function askAI(msgs) {
     return new Promise(function(resolve, reject) {
+      var timedOut = false;
+      var timer = setTimeout(function() {
+        timedOut = true;
+        reject(new Error('AI 回應超時（6秒）'));
+      }, 6000);
+
       fetch(AI_PROXY, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: msgs })
       }).then(function(r) {
-        if (!r.ok) throw new Error('error ' + r.status);
+        clearTimeout(timer);
+        if (timedOut) return;
+        if (!r.ok) throw new Error('API 錯誤 ' + r.status);
         return r.json();
       }).then(function(data) {
+        if (timedOut) return;
         resolve(data.content || '');
       }).catch(function(e) {
-        console.error('[DEBUG] AI request failed:', e);
+        clearTimeout(timer);
+        if (timedOut) return;
+        console.error('[AI] 請求失敗:', e);
         reject(e);
       });
     });
   }
 
   var ALL_Q = [
-    { c: '長', s: '這是一條很<span class="highlight">長</span>的路。', a: 'cháng', p: '這是一條很長的路。', o: ['cháng', 'zhǎng'] },
-    { c: '長', s: '小美<span class="highlight">長</span>高了很多。', a: 'zhǎng', p: '小美長高了很多。', o: ['cháng', 'zhǎng'] },
-    { c: '樂', s: '我們一起欣賞<span class="highlight">音</span>樂表演。', a: 'yuè', p: '我們一起欣賞音樂表演。', o: ['lè', 'yuè'] },
-    { c: '樂', s: '祝你生日快<span class="highlight">樂</span>！', a: 'lè', p: '祝你生日快樂！', o: ['lè', 'yuè'] },
-    { c: '重', s: '這個書包非常<span class="highlight">重</span>。', a: 'zhòng', p: '這個書包非常重。', o: ['zhòng', 'chóng'] },
-    { c: '重', s: '請你再<span class="highlight">重</span>說一次。', a: 'chóng', p: '請你再重說一次。', o: ['zhòng', 'chóng'] },
-    { c: '行', s: '郵局在第二條<span class="highlight">銀</span>行的旁邊。', a: 'háng', p: '郵局在第二條銀行的旁邊。', o: ['xíng', 'háng'] },
-    { c: '行', s: '週末我們去山上<span class="highlight">旅</span>行。', a: 'xíng', p: '週末我們去山上旅行。', o: ['xíng', 'háng'] },
-    { c: '數', s: '弟弟會從一<span class="highlight">數</span>到一百。', a: 'shǔ', p: '弟弟會從一數到一百。', o: ['shǔ', 'shù'] },
-    { c: '數', s: '我喜歡上<span class="highlight">數</span>學課。', a: 'shù', p: '我喜歡上數學課。', o: ['shǔ', 'shù'] },
-    { c: '傳', s: '請你幫我<span class="highlight">傳</span>話給老師。', a: 'chuán', p: '請你幫我傳話給老師。', o: ['chuán', 'zhuàn'] },
-    { c: '傳', s: '水滸<span class="highlight">傳</span>是四大名著之一。', a: 'zhuàn', p: '水滸傳是四大名著之一。', o: ['chuán', 'zhuàn'] }
+    { c: '長', s: '這是一條很<span class="highlight">長</span>的路。', a: 'ㄔㄤˊ', p: '這是一條很長的路。', o: ['ㄔㄤˊ', 'ㄓㄤˇ'] },
+    { c: '長', s: '小美<span class="highlight">長</span>高了很多。', a: 'ㄓㄤˇ', p: '小美長高了很多。', o: ['ㄔㄤˊ', 'ㄓㄤˇ'] },
+    { c: '樂', s: '我們一起欣賞<span class="highlight">音</span>樂表演。', a: 'ㄩㄝˋ', p: '我們一起欣賞音樂表演。', o: ['ㄌㄜˋ', 'ㄩㄝˋ'] },
+    { c: '樂', s: '祝你生日快<span class="highlight">樂</span>！', a: 'ㄌㄜˋ', p: '祝你生日快樂！', o: ['ㄌㄜˋ', 'ㄩㄝˋ'] },
+    { c: '重', s: '這個書包非常<span class="highlight">重</span>。', a: 'ㄓㄨㄥˋ', p: '這個書包非常重。', o: ['ㄓㄨㄥˋ', 'ㄔㄨㄥˊ'] },
+    { c: '重', s: '請你再<span class="highlight">重</span>說一次。', a: 'ㄔㄨㄥˊ', p: '請你再重說一次。', o: ['ㄓㄨㄥˋ', 'ㄔㄨㄥˊ'] },
+    { c: '行', s: '郵局在第二條<span class="highlight">銀</span>行的旁邊。', a: 'ㄏㄤˊ', p: '郵局在第二條銀行的旁邊。', o: ['ㄒㄧㄥˊ', 'ㄏㄤˊ'] },
+    { c: '行', s: '週末我們去山上<span class="highlight">旅</span>行。', a: 'ㄒㄧㄥˊ', p: '週末我們去山上旅行。', o: ['ㄒㄧㄥˊ', 'ㄏㄤˊ'] },
+    { c: '數', s: '弟弟會從一<span class="highlight">數</span>到一百。', a: 'ㄕㄨˇ', p: '弟弟會從一數到一百。', o: ['ㄕㄨˇ', 'ㄕㄨˋ'] },
+    { c: '數', s: '我喜歡上<span class="highlight">數</span>學課。', a: 'ㄕㄨˋ', p: '我喜歡上數學課。', o: ['ㄕㄨˇ', 'ㄕㄨˋ'] },
+    { c: '傳', s: '請你幫我<span class="highlight">傳</span>話給老師。', a: 'ㄔㄨㄢˊ', p: '請你幫我傳話給老師。', o: ['ㄔㄨㄢˊ', 'ㄓㄨㄢˋ'] },
+    { c: '傳', s: '水滸<span class="highlight">傳</span>是四大名著之一。', a: 'ㄓㄨㄢˋ', p: '水滸傳是四大名著之一。', o: ['ㄔㄨㄢˊ', 'ㄓㄨㄢˋ'] }
   ];
 
   var QS = shuffle(ALL_Q.slice());
@@ -165,14 +176,11 @@ h1 { font-size: 26px; color: #4a1d6e; margin-bottom: 6px; }
   var st = { seat: '', qi: 0, sc: 0, t0: 0, t1: 0, ti: null, an: false, sb: false, hu: false };
   var app = document.getElementById('app');
 
-  console.log('[DEBUG] App element:', app ? 'found' : 'not found');
-
   function rss() {
-    console.log('[DEBUG] rss() called');
     st.sb = false;
     QS = shuffle(ALL_Q.slice());
     app.innerHTML = '<h1>🤖 AI 多音字配對遊戲</h1>' +
-      '<p class="subtitle">AI 老師陪你學多音字！選出紅字的正確讀音</p>' +
+      '<p class="subtitle">AI 老師陪你學多音字！選出紅字的正確注音</p>' +
       '<div class="input-group"><label for="sn">請輸入你的班級座號</label>' +
       '<input type="number" id="sn" min="1" max="99" placeholder="例如：12" autofocus></div>' +
       '<button class="btn" id="bs">🚀 開始遊戲（共 ' + QS.length + ' 題）</button>' +
@@ -196,7 +204,7 @@ h1 { font-size: 26px; color: #4a1d6e; margin-bottom: 6px; }
     app.innerHTML = '<p class="progress">第 ' + (st.qi + 1) + ' / ' + QS.length + ' 題</p>' +
       '<div class="timer-bar"><div class="timer-fill" id="tf" style="width:100%"></div></div>' +
       '<div class="sentence">' + q.s + '</div>' +
-      '<p style="font-size:14px;color:#999;">這個紅字的正確讀音是？</p>' +
+      '<p style="font-size:14px;color:#999;">這個紅字的正確注音是？</p>' +
       '<button class="hint-btn" id="bh">💡 AI 提示</button>' +
       '<div id="oc"></div><div id="af"></div>';
 
@@ -240,11 +248,13 @@ h1 { font-size: 26px; color: #4a1d6e; margin-bottom: 6px; }
     }
     var fd = document.getElementById('af');
     fd.innerHTML = '<div class="ai-loading"><div class="spinner"></div>🤖 AI 老師解析中...</div>';
-    saf(q, ok, sel).then(function(h) { fd.innerHTML = h; }).catch(function(e) {
-      console.error('[DEBUG] saf error:', e);
-      fd.innerHTML = '<div class="ai-feedback wrong"><div class="ai-label">🤖 AI 老師</div>AI 老師暫時無法回應，請繼續下一題～</div>';
+    saf(q, ok, sel).then(function(h) {
+      fd.innerHTML = h;
+    }).catch(function(e) {
+      console.error('[AI] 解析失敗:', e);
+      fd.innerHTML = '<div class="ai-feedback wrong"><div class="ai-label">🤖 AI 老師</div>AI 老師暫時無法回應（' + e.message + '），我們繼續下一題吧！</div>';
     });
-    setTimeout(function() { st.qi++; st.an = false; rq(); }, 5000);
+    setTimeout(function() { st.qi++; st.an = false; rq(); }, 8000);
   }
 
   function ht(q) {
@@ -256,17 +266,22 @@ h1 { font-size: 26px; color: #4a1d6e; margin-bottom: 6px; }
     }
     var fd = document.getElementById('af');
     fd.innerHTML = '<div class="ai-loading"><div class="spinner"></div>🤖 AI 老師解析中...</div>';
-    saf(q, false, '(未作答)').then(function(h) { fd.innerHTML = h; }).catch(function() {});
-    setTimeout(function() { st.qi++; st.an = false; rq(); }, 5000);
+    saf(q, false, '(未作答)').then(function(h) {
+      fd.innerHTML = h;
+    }).catch(function(e) {
+      console.error('[AI] 解析失敗:', e);
+      fd.innerHTML = '<div class="ai-feedback wrong"><div class="ai-label">🤖 AI 老師</div>時間到！正確答案是「' + q.a + '」。繼續加油！</div>';
+    });
+    setTimeout(function() { st.qi++; st.an = false; rq(); }, 8000);
   }
 
   function saf(q, ok, sel) {
     return new Promise(function(resolve, reject) {
       var m = ok
-        ? '學生答對了。題目：「' + q.p + '」，正確讀音是「' + q.a + '」。請給一個幫助記憶的可愛小口訣（15字以內）。'
-        : '學生答錯了。題目：「' + q.p + '」，正確讀音是「' + q.a + '」，學生選了「' + sel + '」。請用國小四年級能懂的話，先簡短說明為什麼（1句），再給一個記憶小口訣（15字以內）。總共不超過60字。';
+        ? '學生答對了。題目：「' + q.p + '」，正確注音符號是「' + q.a + '」。請給一個幫助記憶的可愛小口訣（15字以內）。'
+        : '學生答錯了。題目：「' + q.p + '」，正確注音符號是「' + q.a + '」，學生選了「' + sel + '」。請用國小四年級能懂的話，先簡短說明為什麼（1句），再給一個記憶小口訣（15字以內）。總共不超過60字。';
       askAI([
-        { role: 'system', content: '你是國小四年級的溫柔老師，教多音字。用簡單溫暖鼓勵的語氣。' },
+        { role: 'system', content: '你是國小四年級的溫柔老師，教多音字。用簡單溫暖鼓勵的語氣，使用繁體中文。' },
         { role: 'user', content: m }
       ]).then(function(c) {
         var cls = ok ? 'correct' : 'wrong';
@@ -280,13 +295,13 @@ h1 { font-size: 26px; color: #4a1d6e; margin-bottom: 6px; }
     if (st.hu || !b) return;
     st.hu = true; b.textContent = '⏳ AI 思考中...'; b.disabled = true;
     askAI([
-      { role: 'system', content: '你是國小四年級的老師。學生在做多音字練習需要提示，但不能說答案。1句話引導。' },
-      { role: 'user', content: '題目：「' + q.p + '」。請給一個提示引導學生想到正確讀音，不要說出答案。' }
+      { role: 'system', content: '你是國小四年級的老師。學生在做多音字練習需要提示，但不能說答案。1句話引導，使用繁體中文。' },
+      { role: 'user', content: '題目：「' + q.p + '」。請給一個提示引導學生想到正確注音符號，不要說出答案。' }
     ]).then(function(c) {
       b.textContent = '💡 ' + c.substring(0, 30);
     }).catch(function(e) {
-      console.error('[DEBUG] rh error:', e);
-      b.textContent = '💡 提示：想想這個詞的用法～';
+      console.error('[AI] 提示失敗:', e);
+      b.textContent = '💡 提示：想想這個詞平常怎麼念～';
     });
   }
 
@@ -339,19 +354,17 @@ h1 { font-size: 26px; color: #4a1d6e; margin-bottom: 6px; }
   function re(pct, ts) {
     var lv = pct >= 80 ? '高分' : pct >= 50 ? '中等' : '需要加油';
     askAI([
-      { role: 'system', content: '你是國小四年級的溫柔老師。請給學生一段鼓勵的話，語氣像在對孩子說話一樣溫暖。40字以內。' },
+      { role: 'system', content: '你是國小四年級的溫柔老師。請給學生一段鼓勵的話，語氣像在對孩子說話一樣溫暖。40字以內，使用繁體中文。' },
       { role: 'user', content: '學生答對 ' + st.sc + '/' + QS.length + ' 題（正確率' + pct + '%），花了' + ts + '秒。程度：' + lv + '。' }
     ]).then(function(c) {
       document.getElementById('ae').innerHTML = '<div class="ai-box"><h3>🤖 AI 老師的話</h3><p>' + c + '</p></div>';
     }).catch(function(e) {
-      console.error('[DEBUG] re error:', e);
+      console.error('[AI] 鼓勵失敗:', e);
       document.getElementById('ae').innerHTML = '<div class="ai-box"><h3>🤖 AI 老師的話</h3><p>你很棒！每一次練習都在進步，繼續加油喔！🌟</p></div>';
     });
   }
 
-  console.log('[DEBUG] Calling rss()');
   rss();
-  console.log('[DEBUG] rss() completed');
 </script>
 </body>
 </html>
