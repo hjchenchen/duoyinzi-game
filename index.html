@@ -205,7 +205,8 @@ h1 { font-size: 26px; color: #4a1d6e; margin-bottom: 6px; }
       '<div class="timer-bar"><div class="timer-fill" id="tf" style="width:100%"></div></div>' +
       '<div class="sentence">' + q.s + '</div>' +
       '<p style="font-size:14px;color:#999;">這個紅字的正確注音是？</p>' +
-      '<button class="hint-btn" id="bh">💡 AI 提示</button>' +
+      '<button class="hint-btn" id="bh">💡 AI 提示</button> ' +
+      '<button class="hint-btn" id="be" style="background:linear-gradient(135deg,#9c27b0,#7b1fa2);">🎓 AI 講解</button>' +
       '<div id="oc"></div><div id="af"></div>';
 
     var ct = document.getElementById('oc');
@@ -222,6 +223,7 @@ h1 { font-size: 26px; color: #4a1d6e; margin-bottom: 6px; }
     }
 
     document.getElementById('bh').addEventListener('click', function() { rh(q); });
+    document.getElementById('be').addEventListener('click', function() { rx(q); });
 
     var ti = setInterval(function() {
       var e = Date.now() - start;
@@ -302,6 +304,26 @@ h1 { font-size: 26px; color: #4a1d6e; margin-bottom: 6px; }
     }).catch(function(e) {
       console.error('[AI] 提示失敗:', e);
       b.textContent = '💡 提示：想想這個詞平常怎麼念～';
+    });
+  }
+
+  function rx(q) {
+    var b = document.getElementById('be');
+    var fd = document.getElementById('af');
+    if (!b) return;
+    b.textContent = '⏳ AI 準備講解...'; b.disabled = true;
+    fd.innerHTML = '<div class="ai-loading"><div class="spinner"></div>🤖 AI 老師正在準備講解...</div>';
+    askAI([
+      { role: 'system', content: '你是國小四年級的溫柔老師，正在教多音字。請詳細說明這個字的兩種讀音分別在什麼時候使用，各舉一個簡單例子。用繁體中文，語氣溫暖。80字以內。' },
+      { role: 'user', content: '題目：「' + q.p + '」，這個字有兩種讀音。請詳細說明這兩種讀音分別在什麼情況下使用，各舉一個生活化的例子。' }
+    ]).then(function(c) {
+      b.textContent = '🎓 AI 講解';
+      fd.innerHTML = '<div class="ai-feedback correct"><div class="ai-label">🎓 AI 老師講解「' + q.c + '」：</div>' + c.replace(/\n/g, '<br>') + '</div>';
+    }).catch(function(e) {
+      console.error('[AI] 講解失敗:', e);
+      b.textContent = '🎓 AI 講解';
+      b.disabled = false;
+      fd.innerHTML = '<div class="ai-feedback wrong"><div class="ai-label">🤖 AI 老師</div>AI 老師暫時無法講解（' + e.message + '），請直接作答或看課本複習喔！</div>';
     });
   }
 
