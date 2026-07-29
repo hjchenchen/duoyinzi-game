@@ -105,25 +105,17 @@ h1 { font-size: 26px; color: #4a1d6e; margin-bottom: 6px; }
   <div id="screen-start">遊戲載入中...</div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" async></script>
 <script>
-try {
-  console.log('[DEBUG] Script started');
-
   var SUPABASE_URL = 'https://gedmvhclerscqdvjmqrc.supabase.co';
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlZG12aGNsZXJzY3FkdmptcXJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzMzgwMjIsImV4cCI6MjEwMDkxNDAyMn0.-StkBfmWnJLgFfaxJEx2bnjrx9rVZmZw5uZYsaPGRx8';
   var AI_PROXY = 'https://gedmvhclerscqdvjmqrc.supabase.co/functions/v1/ai-proxy';
 
-  console.log('[DEBUG] Supabase object:', typeof window.supabase);
-
-  var supabase;
-  if (window.supabase && window.supabase.createClient) {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    console.log('[DEBUG] Supabase client created');
-  } else {
-    console.error('[DEBUG] Supabase not loaded');
-    document.getElementById('app').innerHTML = '<h1>⚠️ 載入失敗</h1><p class="subtitle">Supabase 函式庫未能載入，請檢查網路連線後重新整理頁面。</p>';
-    throw new Error('Supabase not loaded');
+  function getSupabase() {
+    if (window.supabase && window.supabase.createClient) {
+      return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+    return null;
   }
 
   function shuffle(a) {
@@ -323,8 +315,10 @@ try {
 
     document.getElementById('bsb').addEventListener('click', function() {
       var btn = this, sts = document.getElementById('ss');
+      var sb = getSupabase();
+      if (!sb) { sts.style.display = 'block'; sts.className = 'status-msg error'; sts.textContent = '❌ Supabase 尚未載入，請稍候再試'; btn.disabled = false; return; }
       btn.disabled = true; btn.textContent = '上傳中...';
-      supabase.from('game_scores').insert({ seat_number: st.seat, score: st.sc, total_questions: QS.length, time_seconds: ts })
+      sb.from('game_scores').insert({ seat_number: st.seat, score: st.sc, total_questions: QS.length, time_seconds: ts })
         .then(function(r) {
           if (r.error) throw r.error;
           sts.style.display = 'block'; sts.className = 'status-msg success';
@@ -358,11 +352,6 @@ try {
   console.log('[DEBUG] Calling rss()');
   rss();
   console.log('[DEBUG] rss() completed');
-
-} catch (err) {
-  console.error('[DEBUG] Fatal error:', err);
-  document.getElementById('app').innerHTML = '<h1>⚠️ 發生錯誤</h1><p class="subtitle">' + err.message + '</p><p class="footer">請重新整理頁面或換一個瀏覽器再試</p>';
-}
 </script>
 </body>
 </html>
